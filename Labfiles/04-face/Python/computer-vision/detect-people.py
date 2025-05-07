@@ -6,7 +6,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # import namespaces
-
+from azure.ai.vision.imageanalysis import ImageAnalysisClient
+from azure.ai.vision.imageanalysis.models import VisualFeatures
+from azure.core.credentials import AzureKeyCredential
 
 
 def main():
@@ -27,7 +29,10 @@ def main():
             image_data = f.read()
 
         # Authenticate Azure AI Vision client
-        
+        cv_client = ImageAnalysisClient(
+            endpoint=ai_endpoint,
+            credential=AzureKeyCredential(ai_key)
+        )
         
         # Analyze image
         AnalyzeImage(image_file, image_data, cv_client)
@@ -40,7 +45,11 @@ def AnalyzeImage(filename, image_data, cv_client):
     print('\nAnalyzing ', filename)
 
     # Get result with specified features to be retrieved (PEOPLE)
-    
+    result = cv_client.analyze(
+        image_data=image_data,
+        visual_features=[
+            VisualFeatures.PEOPLE],
+    )
 
     # Identify people in the image
     if result.people is not None:
@@ -54,7 +63,15 @@ def AnalyzeImage(filename, image_data, cv_client):
         color = 'cyan'
 
         # Draw bounding box around detected people
+        for detected_people in result.people.list:
+            if(detected_people.confidence > 0.5):
+                # Draw object bounding box
+                r = detected_people.bounding_box
+                bounding_box = ((r.x, r.y), (r.x + r.width, r.y + r.height))
+                draw.rectangle(bounding_box, outline=color, width=3)
 
+            # Return the confidence of the person detected
+            #print(" {} (confidence: {:.2f}%)".format(detected_people.bounding_box, detected_people.confidence * 100))
             
         # Save annotated image
         plt.imshow(image)
@@ -64,4 +81,5 @@ def AnalyzeImage(filename, image_data, cv_client):
         print('  Results saved in', outputfile)
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()

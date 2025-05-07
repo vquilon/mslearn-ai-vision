@@ -2,3 +2,7 @@ matplotlib
 python-dotenv
 azure-ai-vision-imageanalysis
 azure-cognitiveservices-vision-customvision
+azure-ai-vision-face
+dotenv
+matplotlib
+pillow
